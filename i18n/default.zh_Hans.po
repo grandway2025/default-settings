@@ -4,4 +4,5 @@ msgstr "NFtables 防火墙"
 msgid "IPtables Firewall"
 msgstr "IPtables 防火墙"
 
-
+msgid "Use as docker root directory (/opt)"
+msgstr "作为 docker 根目录使用（/opt）"
