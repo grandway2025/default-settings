@@ -1,3 +1,6 @@
+msgid "CPU usage"
+msgstr "CPU 使用率"
+
 msgid "NFtables Firewall"
 msgstr "NFtables 防火墙"
 
