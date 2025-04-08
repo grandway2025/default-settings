@@ -21,34 +21,9 @@ uci commit system
 sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 
-# openwrt_extras
-devices_setup() {
-    ARCH=$(uname -m)
-    DISTFEEDS="/etc/opkg/distfeeds.conf"
-
-    # 确保 distfeeds.conf 文件存在
-    if [ ! -f "$DISTFEEDS" ]; then
-        echo "Error: $DISTFEEDS file does not exist."
-        return 1
-    fi
-
-    # 获取当前的架构信息
-    DISTRIB_ARCH=$(awk -F= '/DISTRIB_ARCH/ { print $2 }' /etc/openwrt_release)
-
-    # 对于 x86_64 架构
-    if [ "$ARCH" = "x86/64" ]; then
-        # 防止重复添加
-        grep -q "openwrt_extras" $DISTFEEDS || echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/x86_64/package" >> $DISTFEEDS
-        grep -q "openwrt_helloworld" $DISTFEEDS || echo "src/gz openwrt_helloworld https://opkg.cooluc.com/openwrt-24.10/x86_64/helloworld" >> $DISTFEEDS
-
-    # 对于 aarch64 架构
-    elif [ "$ARCH" = "aarch64" ]; then
-        # 防止重复添加
-        grep -q "openwrt_extras" $DISTFEEDS || echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/rockchip/package" >> $DISTFEEDS
-        grep -q "openwrt_helloworld" $DISTFEEDS || echo "src/gz openwrt_helloworld https://opkg.cooluc.com/openwrt-24.10/rockchip/helloworld" >> $DISTFEEDS
-    fi
-}
-
+# extra packages
+echo "src/gz openwrt_extras https://clone.kejizero.online/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/package >> /etc/opkg/distfeeds.conf
+echo "src/gz openwrt_helloworld https://clone.kejizero.online/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/helloworld >> /etc/opkg/distfeeds.conf
 
 # Set up hostname mapping
 uci add dhcp domain
