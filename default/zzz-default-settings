@@ -36,7 +36,7 @@ devices_setup() {
     DISTRIB_ARCH=$(awk -F= '/DISTRIB_ARCH/ { print $2 }' /etc/openwrt_release)
 
     # 对于 x86_64 架构
-    if [ "$ARCH" = "x86_64" ]; then
+    if [ "$ARCH" = "x86/64" ]; then
         # 防止重复添加
         grep -q "openwrt_extras" $DISTFEEDS || echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/x86_64/package" >> $DISTFEEDS
         grep -q "openwrt_helloworld" $DISTFEEDS || echo "src/gz openwrt_helloworld https://opkg.cooluc.com/openwrt-24.10/x86_64/helloworld" >> $DISTFEEDS
