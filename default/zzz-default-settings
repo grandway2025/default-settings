@@ -21,6 +21,19 @@ uci commit system
 sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 
+# feeds
+devices_setup() {
+    ARCH=$(uname -m)
+
+    if [ "$ARCH" = "x86_64" ]; then
+        echo "src/gz openwrt_extras https://clone.kejizero.online/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/package" >> /etc/opkg/distfeeds.conf
+        echo "src/gz openwrt_helloworld https://clone.kejizero.online/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/helloworld" >> /etc/opkg/distfeeds.conf
+    elif [ "$ARCH" = "aarch64" ]; then
+        echo "src/gz openwrt_extras https://clone.kejizero.online/raw.githubusercontent.com/oppen321/openwrt_extras/main/rockchip/package" >> /etc/opkg/distfeeds.conf
+        echo "src/gz openwrt_helloworld https://clone.kejizero.online/raw.githubusercontent.com/oppen321/openwrt_extras/main/xrockchip/helloworld" >> /etc/opkg/distfeeds.conf
+    fi
+}
+
 # Set up hostname mapping
 uci add dhcp domain
 uci set "dhcp.@domain[-1].name=time.android.com"
