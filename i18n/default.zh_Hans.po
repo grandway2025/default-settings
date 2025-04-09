@@ -99,3 +99,12 @@ msgstr "前缀优先时间上限"
 
 msgid "Max valid lifetime"
 msgstr "前缀有效时间上限"
+
+msgid "Hyper Modem Server"
+msgstr "超级移动网络拨号服务"
+
+msgid "Modem Server For OpenWrt"
+msgstr "OpenWrt移动网络拨号服务"
+
+msgid "Enable Network bridge"
+msgstr "启用网络桥架"
