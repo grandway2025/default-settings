@@ -416,4 +416,11 @@ uci commit nikki
 # 重启服务
 /etc/init.d/nikki restart
 
+### ssrplus
+# black.list
+echo -e "teamviewer.com\nepicgames.com\ndangdang.com\naccount.synology.com\nddns.synology.com\ncheckip.synology.com\ncheckip.dyndns.org\ncheckipv6.synology.com\nntp.aliyun.com\ncn.ntp.org.cn\nntp.ntsc.ac.cn" > /etc/ssrplus/white.list
+
+# black.list
+echo -e "dns.sb\ndoh.li\ncontainerpi.com\nemby.vip" > /etc/ssrplus/black.list
+
 exit 0
