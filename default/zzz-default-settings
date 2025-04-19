@@ -74,6 +74,7 @@ if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -e
     uci commit dockerd
 fi
 
+
 # Smartdns相关设置
 uci add smartdns server
 uci set smartdns.@server[0].enabled='1'
