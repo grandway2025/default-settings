@@ -27,6 +27,7 @@ sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:
 
 # Set beardropper
 sed -i 's/\"services\"/\"control\"/g' /usr/lib/lua/luci/controller/beardropper.lua
+sed -i 's/services/control/g' /usr/lib/lua/luci/view/beardropper/status.htm
 
 # Set appfilter
 sed -i 's/\"services\"/\"network\"/g' /usr/lib/lua/luci/controller/appfilter.lua
