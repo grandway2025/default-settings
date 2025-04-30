@@ -34,6 +34,11 @@ sed -i 's/\"services\"/\"network\"/g' /usr/lib/lua/luci/controller/appfilter.lua
 # Set ssrplus
 ln -s /usr/libexec/wget-ssl /usr/bin/
 
+# Set lucky
+uci set lucky.@lucky[0].enabled='0'
+uci commit lucky
+/etc/init.d/lucky restart
+
 # extra packages
 echo 'src/gz openwrt_extras https://ghfast.top/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/package' >> /etc/opkg/distfeeds.conf
 echo 'src/gz openwrt_helloworld https://ghfast.top/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/helloworld' >> /etc/opkg/distfeeds.conf
