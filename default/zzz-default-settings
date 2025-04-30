@@ -25,6 +25,9 @@ uci commit system
 sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 
+# Set beardropper
+sed -i 's/\"services\"/\"control\"/g' /usr/lib/lua/luci/controller/beardropper.lua
+
 # Set ssrplus
 ln -s /usr/libexec/wget-ssl /usr/bin/
 
