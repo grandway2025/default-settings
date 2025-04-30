@@ -108,3 +108,6 @@ msgstr "OpenWrt移动网络拨号服务"
 
 msgid "Enable Network bridge"
 msgstr "启用网络桥架"
+
+msgid "BearDropper"
+msgstr "登入管控"
