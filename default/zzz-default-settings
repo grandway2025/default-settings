@@ -30,6 +30,7 @@ ln -s /usr/libexec/wget-ssl /usr/bin/
 
 # Set beardropper
 sed -i 's/\"services\"/\"control\"/g' /usr/lib/lua/luci/controller/beardropper.lua
+sed -i 's/services/control/g' /usr/lib/lua/luci/view/beardropper/status.htm
 
 # Set appfilter
 sed -i 's/\"services\"/\"network\"/g' /usr/lib/lua/luci/controller/appfilter.lua
