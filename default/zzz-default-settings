@@ -31,25 +31,10 @@ uci commit luci
 sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 
-# Set ssrplus
-ln -s /usr/libexec/wget-ssl /usr/bin/
-
 # Set lucky
 uci set lucky.@lucky[0].enabled='0'
 uci commit lucky
 /etc/init.d/lucky restart
-
-# Set caddy
-uci set caddy.@caddy[0].bin_dir='/usr/bin/caddy'
-uci commit caddy
-/etc/init.d/caddy restart
-
-# extra packages
-echo 'src/gz openwrt_extras https://ghfast.top/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/package' >> /etc/opkg/distfeeds.conf
-echo 'src/gz openwrt_helloworld https://ghfast.top/raw.githubusercontent.com/oppen321/openwrt_extras/main/x86_64/helloworld' >> /etc/opkg/distfeeds.conf
-
-# check_signature
-sed -i 's/^option check_signature/# option check_signature/' /etc/opkg.conf
 
 # Set up hostname mapping
 uci add dhcp domain
@@ -434,12 +419,5 @@ uci commit nikki
 
 # 重启服务
 /etc/init.d/nikki restart
-
-### ssrplus
-# black.list
-echo -e "teamviewer.com\nepicgames.com\ndangdang.com\naccount.synology.com\nddns.synology.com\ncheckip.synology.com\ncheckip.dyndns.org\ncheckipv6.synology.com\nntp.aliyun.com\ncn.ntp.org.cn\nntp.ntsc.ac.cn" > /etc/ssrplus/white.list
-
-# black.list
-echo -e "dns.sb\ndoh.li\ncontainerpi.com\nemby.vip" > /etc/ssrplus/black.list
 
 exit 0
