@@ -27,6 +27,11 @@ uci set luci.diag.route='www.qq.com'
 uci set luci.diag.dns='www.qq.com'
 uci commit luci
 
+# ttyd
+uci set ttyd.@ttyd[0].command='/bin/login -f root'
+uci commit ttyd
+/etc/init.d/ttyd restart
+
 # Set password
 sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
