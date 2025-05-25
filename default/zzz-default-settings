@@ -103,6 +103,7 @@ fi
 
 # extra packages
 echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/$(. /etc/openwrt_release ; echo $DISTRIB_ARCH)" >> /etc/opkg/distfeeds.conf
+opkg-key add /root/key-build.pub
 
 # Smartdns相关设置
 uci add smartdns server
