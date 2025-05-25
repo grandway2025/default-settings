@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# OTA
+OTA_URL="https://api.cooluc.com/openwrt/ota.json"
+uci set ota.config.api_url="$OTA_URL"
+uci commit ota
+
+# irqbalance
+uci set irqbalance.irqbalance.enabled='0'
+uci commit irqbalance
+service irqbalance stop
+
 # Set default theme to luci-theme-argon
 uci set luci.main.mediaurlbase='/luci-static/argon'
 uci commit luci
