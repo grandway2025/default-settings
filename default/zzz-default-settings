@@ -14,6 +14,11 @@ service irqbalance stop
 uci set luci.main.mediaurlbase='/luci-static/argon'
 uci commit luci
 
+# firewall
+[ $(grep -c shortcut_fe /etc/config/firewall) -eq '0' ] && uci set firewall.@defaults[0].flow_offloading='1'
+uci set firewall.@defaults[0].input='ACCEPT'
+uci commit firewall
+
 # Set argon config
 uci set argon.@global[0].mode='dark'
 uci commit argon
