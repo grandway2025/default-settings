@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # OTA
-OTA_URL="https://api.cooluc.com/openwrt/ota.json"
+OTA_URL="https://ota.kejizero.online/x86_64/ota.json"
 uci set ota.config.api_url="$OTA_URL"
 uci commit ota
 
