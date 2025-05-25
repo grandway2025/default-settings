@@ -1,5 +1,11 @@
 #!/bin/bash
 
+. /etc/os-release
+. /lib/functions/uci-defaults.sh
+
+[ $(uname -m) = "x86_64" ] && alias board_name="echo x86_64"
+[ "$OPENWRT_BOARD" = "armsr/armv8" ] && alias board_name="echo armsr,armv8"
+
 # OTA
 OTA_URL="https://ota.kejizero.online/x86_64/ota.json"
 uci set ota.config.api_url="$OTA_URL"
@@ -95,6 +101,8 @@ if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -e
     uci commit dockerd
 fi
 
+# extra packages
+echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/$(. /etc/openwrt_release ; echo $DISTRIB_ARCH)" >> /etc/opkg/distfeeds.conf
 
 # Smartdns相关设置
 uci add smartdns server
