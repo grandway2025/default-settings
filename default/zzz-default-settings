@@ -1,29 +1,8 @@
 #!/bin/bash
 
-. /etc/os-release
-. /lib/functions/uci-defaults.sh
-
-[ $(uname -m) = "x86_64" ] && alias board_name="echo x86_64"
-[ "$OPENWRT_BOARD" = "armsr/armv8" ] && alias board_name="echo armsr,armv8"
-
-# OTA
-OTA_URL="https://ota.kejizero.online/x86_64/ota.json"
-uci set ota.config.api_url="$OTA_URL"
-uci commit ota
-
-# irqbalance
-uci set irqbalance.irqbalance.enabled='0'
-uci commit irqbalance
-service irqbalance stop
-
 # Set default theme to luci-theme-argon
 uci set luci.main.mediaurlbase='/luci-static/argon'
 uci commit luci
-
-# firewall
-[ $(grep -c shortcut_fe /etc/config/firewall) -eq '0' ] && uci set firewall.@defaults[0].flow_offloading='1'
-uci set firewall.@defaults[0].input='ACCEPT'
-uci commit firewall
 
 # Set argon config
 uci set argon.@global[0].mode='dark'
@@ -57,11 +36,6 @@ uci commit ttyd
 sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 
-# Set lucky
-uci set lucky.@lucky[0].enabled='0'
-uci commit lucky
-/etc/init.d/lucky restart
-
 # Set up hostname mapping
 uci add dhcp domain
 uci set "dhcp.@domain[-1].name=time.android.com"
@@ -79,27 +53,6 @@ zram_size=$(echo | awk "{print int($mem_total*0.25/1024)}")
 uci set system.@system[0].zram_size_mb="$zram_size"
 uci set system.@system[0].zram_comp_algo='lz4'
 uci commit system
-
-# nginx
-uci set nginx.global.uci_enable='true'
-uci del nginx._lan
-uci del nginx._redirect2ssl
-uci add nginx server
-uci rename nginx.@server[0]='_lan'
-uci set nginx._lan.server_name='_lan'
-uci add_list nginx._lan.listen='80 default_server'
-uci add_list nginx._lan.listen='[::]:80 default_server'
-#uci add_list nginx._lan.include='restrict_locally'
-uci add_list nginx._lan.include='conf.d/*.locations'
-uci set nginx._lan.access_log='off; # logd openwrt'
-uci commit nginx
-service nginx restart
-
-# docker mirror
-if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -eq '0' ]; then
-    uci add_list dockerd.globals.registry_mirrors="https://docker.m.daocloud.io"
-    uci commit dockerd
-fi
 
 # extra packages
 echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/$(. /etc/openwrt_release ; echo $DISTRIB_ARCH)" >> /etc/opkg/distfeeds.conf
