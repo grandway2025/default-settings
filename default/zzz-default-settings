@@ -105,6 +105,9 @@ fi
 echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/$(. /etc/openwrt_release ; echo $DISTRIB_ARCH)" >> /etc/opkg/distfeeds.conf
 opkg-key add /root/key-build.pub
 
+# kernel packages
+sed -i "\$a\src/gz openwrt_core https://raw.githubusercontent.com/zhiern/openwrt-core/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
+
 # Smartdns相关设置
 uci add smartdns server
 uci set smartdns.@server[0].enabled='1'
