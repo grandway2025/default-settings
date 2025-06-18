@@ -106,7 +106,7 @@ echo "src/gz openwrt_extras https://opkg.cooluc.com/openwrt-24.10/$(. /etc/openw
 opkg-key add /root/key-build.pub
 
 # kernel packages
-sed -i "\$a\src/gz openwrt_core https://raw.githubusercontent.com/zhiern/openwrt-core/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
+sed -i "\$a\src/gz openwrt_core https://clone.kejizero.online/https://raw.githubusercontent.com/zhiern/openwrt-core/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
 
 # Smartdns相关设置
 uci add smartdns server
