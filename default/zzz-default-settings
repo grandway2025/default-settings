@@ -102,11 +102,11 @@ if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -e
 fi
 
 # extra packages
-grep -q IceG_repo /etc/opkg/customfeeds.conf || echo 'src/gz zhiern_repo https://clone.kejizero.online/github.com/zhiern/Extras-ipk/raw/x86_64/myrepo' >> /etc/opkg/customfeeds.conf
+grep -q IceG_repo /etc/opkg/customfeeds.conf || echo 'src/gz zhiern_repo https://opkg.kejizero.online/openwrt-24.10/x86_64' >> /etc/opkg/customfeeds.conf
 opkg-key add /root/my-private.key.pub
 
 # kernel packages
-sed -i "\$a\src/gz openwrt_core https://clone.kejizero.online/https://raw.githubusercontent.com/zhiern/openwrt-core/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
+sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
 
 # Smartdns相关设置
 uci add smartdns server
