@@ -7,7 +7,7 @@
 [ "$OPENWRT_BOARD" = "armsr/armv8" ] && alias board_name="echo armsr,armv8"
 
 # OTA
-OTA_URL="https://ota.kejizero.online/x86_64/ota.json"
+OTA_URL="https://github.com/grandway2025/Actions-OpenWrt/date/ota.json"
 uci set ota.config.api_url="$OTA_URL"
 uci commit ota
 
