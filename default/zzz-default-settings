@@ -10,7 +10,4 @@ if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -e
     uci commit dockerd
 fi
 
-# 重启服务
-/etc/init.d/nikki restart
-
 exit 0
