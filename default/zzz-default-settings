@@ -4,6 +4,25 @@
 uci set luci.main.mediaurlbase='/luci-static/argon'
 uci commit luci
 
+# Set NTP
+uci -q batch <<-EOF
+	set system.@system[0].timezone='CST-8'
+	set system.@system[0].zonename='Asia/Shanghai'
+
+	delete system.ntp.server
+	add_list system.ntp.server='ntp1.aliyun.com'
+	add_list system.ntp.server='ntp.tencent.com'
+	add_list system.ntp.server='ntp.ntsc.ac.cn'
+	add_list system.ntp.server='time.apple.com'
+EOF
+uci commit system
+
+# diagnostics
+uci set luci.diag.ping='www.qq.com'
+uci set luci.diag.route='www.qq.com'
+uci set luci.diag.dns='www.qq.com'
+uci commit luci
+
 # docker mirror
 if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -eq '0' ]; then
     uci add_list dockerd.globals.registry_mirrors="https://docker.m.daocloud.io"
