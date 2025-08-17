@@ -3,8 +3,18 @@
 . /etc/os-release
 . /lib/functions/uci-defaults.sh
 
-[ $(uname -m) = "x86_64" ] && alias board_name="echo x86_64"
-[ "$OPENWRT_BOARD" = "armsr/armv8" ] && alias board_name="echo armsr,armv8"
+# 判断架构
+ARCH=$(uname -m)
+
+# 删除已有 openwrt_core 源
+sed -i '/openwrt_core/d' /etc/opkg/distfeeds.conf
+
+# 根据架构添加对应源
+if [ "$ARCH" = "x86_64" ]; then
+    sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
+else
+    sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/aarch64_generic/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
+fi
 
 # OTA
 OTA_URL="https://github.com/grandway2025/Actions-OpenWrt/date/ota.json"
@@ -102,7 +112,7 @@ grep -q IceG_repo /etc/opkg/customfeeds.conf || echo 'src/gz zhiern_repo https:/
 opkg-key add /root/my-private.key.pub
 
 # x86_64 kernel packages
-sed -i '/openwrt_core/d' /etc/opkg/distfeeds.conf
-sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
+# sed -i '/openwrt_core/d' /etc/opkg/distfeeds.conf
+# sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
 
 exit 0
