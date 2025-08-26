@@ -116,8 +116,8 @@ opkg-key add /root/my-private.key.pub
 # sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
 
 # vlmcsd设置
-uci set vlmcsd.enabled='1'
-uci set vlmcsd.autoactivate='1'
-uci set vlmcsd.firewall='1'
+set vlmcsd.@vlmcsd[0].enabled='1'
+set vlmcsd.@vlmcsd[0].autoactivate='1'
+set vlmcsd.@vlmcsd[0].firewall='1'
 
 exit 0
