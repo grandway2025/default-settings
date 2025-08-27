@@ -76,6 +76,13 @@ uci set "dhcp.@domain[-1].name=time.android.com"
 uci set "dhcp.@domain[-1].ip=203.107.6.88"
 uci commit dhcp
 
+# Set dhcp
+uci set "dhcp.@dnsmasq[0].cachesize=0"
+uci set "dhcp.@dnsmasq[0].noresolv=1"
+uci set "dhcp.@dnsmasq[0].quietdhcp=1"
+uci set "dhcp.@dnsmasq[0].dnsseccheckunsigned=0"
+uci commit dhcp
+
 # Set SSH
 uci delete ttyd.@ttyd[0].interface
 uci set dropbear.@dropbear[0].Interface=''
