@@ -32,6 +32,8 @@ uci commit luci
 
 # Set argon config
 uci set argon.@global[0].mode='dark'
+uci set argon.@global[0].transparency='0.5'
+uci set argon.@global[0].transparency_dark='0.5'
 uci commit argon
 
 # firewall
@@ -116,9 +118,9 @@ opkg-key add /root/my-private.key.pub
 # sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
 
 # vlmcsd设置
-uci set vlmcsd.@vlmcsd[0].enabled='1'
-uci set vlmcsd.@vlmcsd[0].autoactivate='1'
-uci set vlmcsd.@vlmcsd[0].firewall='1'
+# uci set vlmcsd.@vlmcsd[0].enabled='1'
+# uci set vlmcsd.@vlmcsd[0].autoactivate='1'
+# uci set vlmcsd.@vlmcsd[0].firewall='1'
 
 uci set vlmcsd.config.@vlmcsd[0].enabled='1'
 uci set vlmcsd.config.@vlmcsd[0].autoactivate='1'
