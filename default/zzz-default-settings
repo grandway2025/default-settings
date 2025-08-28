@@ -70,13 +70,10 @@ uci set lucky.@lucky[0].enabled='0'
 uci commit lucky
 /etc/init.d/lucky restart
 
-# Set up hostname mapping
+# Set dhcp && Set up hostname mapping
 uci add dhcp domain
 uci set "dhcp.@domain[-1].name=time.android.com"
 uci set "dhcp.@domain[-1].ip=203.107.6.88"
-uci commit dhcp
-
-# Set dhcp
 uci set "dhcp.@dnsmasq[0].cachesize=0"
 uci set "dhcp.@dnsmasq[0].noresolv=1"
 uci set "dhcp.@dnsmasq[0].quietdhcp=1"
@@ -125,12 +122,8 @@ opkg-key add /root/my-private.key.pub
 # sed -i "\$a\src/gz openwrt_core https://core.kejizero.online/x86_64/$(grep Version /usr/lib/opkg/info/kernel.control | awk '{print $2}')" /etc/opkg/distfeeds.conf
 
 # vlmcsd设置
-# uci set vlmcsd.@vlmcsd[0].enabled='1'
-# uci set vlmcsd.@vlmcsd[0].autoactivate='1'
-# uci set vlmcsd.@vlmcsd[0].firewall='1'
-
-uci set vlmcsd.config.@vlmcsd[0].enabled='1'
-uci set vlmcsd.config.@vlmcsd[0].autoactivate='1'
-uci set vlmcsd.config.@vlmcsd[0].firewall='1'
+uci set vlmcsd.@vlmcsd[0].enabled='1'
+uci set vlmcsd.@vlmcsd[0].autoactivate='1'
+uci set vlmcsd.@vlmcsd[0].firewall='1'
 
 exit 0
