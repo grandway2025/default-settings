@@ -72,6 +72,22 @@ if [ -d "/www/luci-static/argon" ] && [ -z "$(uci -q get luci.main.pollinterval)
     uci commit luci
 fi
 
+# Set argon config
+uci set argon.@global[0].mode='dark'
+uci set argon.@global[0].transparency='0.5'
+uci set argon.@global[0].transparency_dark='0.5'
+uci commit argon
+
+# ttyd
+uci set ttyd.@ttyd[0].command='/bin/login -f root'
+uci commit ttyd
+/etc/init.d/ttyd restart
+
+# vlmcsd设置
+uci set vlmcsd.@vlmcsd[0].enabled='1'
+uci set vlmcsd.@vlmcsd[0].autoactivate='1'
+uci set vlmcsd.@vlmcsd[0].firewall='1'
+
 # timezone
 uci set system.@system[0].timezone=CST-8
 uci set system.@system[0].zonename=Asia/Shanghai
