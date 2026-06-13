@@ -1,8 +1,76 @@
-#!/bin/bash
+#!/bin/sh
 
-# Set default theme to luci-theme-argon
-uci set luci.main.mediaurlbase='/luci-static/argon'
-uci commit luci
+. /etc/os-release
+. /lib/functions/uci-defaults.sh
+
+[ $(uname -m) = "x86_64" ] && alias board_name="echo x86_64"
+[ "$OPENWRT_BOARD" = "armsr/armv8" ] && alias board_name="echo armsr,armv8"
+
+# OTA
+case "$VERSION_TYPE" in
+  minimal)
+    suffix="-minimal"
+    ;;
+  standard)
+    suffix="-standard"
+    ;;
+  *)
+    suffix=""
+    ;;
+esac
+OTA_URL="https://api.cooluc.com/ota/openwrt-25.12${suffix}.json"
+
+kernel_version=$(uname -r | sed 's/-.*//' | cut -d. -f1-2)
+
+devices_setup()
+{
+    case "$(board_name)" in
+    armsr,armv8)
+        if [ "$kernel_version" = "6.18" ]; then
+            [ ! -d "/usr/share/openwrt_core" ] && {
+                openwrt_core="openwrt_core3/armsr-armv8"
+                sed -i '/targets/d' /etc/apk/repositories.d/distfeeds.list
+                echo "https://raw.githubusercontent.com/sbwml/${openwrt_core}/$(grep kernel /etc/apk/world | awk -F= '{print $2}')/packages.adb" >> /etc/apk/repositories.d/distfeeds.list
+            }
+            uci set ota.config.api_url="$OTA_URL"
+            uci commit ota
+        fi
+        ;;
+    friendlyarm,nanopi-r4s|\
+    friendlyarm,nanopi-r5c|\
+    friendlyarm,nanopi-r5s|\
+    friendlyarm,nanopi-r76s)
+        uci set irqbalance.irqbalance.enabled='0'
+        uci commit irqbalance
+        service irqbalance stop
+        if [ "$kernel_version" = "6.18" ]; then
+            [ ! -d "/usr/share/openwrt_core" ] && {
+                sed -i '/targets/d' /etc/apk/repositories.d/distfeeds.list
+                echo "https://core3.cooluc.com/aarch64_generic/$(grep kernel /etc/apk/world | awk -F= '{print $2}')/packages.adb" >> /etc/apk/repositories.d/distfeeds.list
+            }
+            uci set ota.config.api_url="$OTA_URL"
+            uci commit ota
+        fi
+        ;;
+    x86_64)
+        if [ "$kernel_version" = "6.18" ]; then
+            [ ! -d "/usr/share/openwrt_core" ] && {
+                sed -i '/targets/d' /etc/apk/repositories.d/distfeeds.list
+                echo "https://core3.cooluc.com/x86_64/$(grep kernel /etc/apk/world | awk -F= '{print $2}')/packages.adb" >> /etc/apk/repositories.d/distfeeds.list
+            }
+        fi
+        uci set ota.config.api_url="$OTA_URL"
+        uci commit ota
+        ;;
+    esac
+}
+
+# theme
+if [ -d "/www/luci-static/argon" ] && [ -z "$(uci -q get luci.main.pollinterval)" ]; then
+    uci set luci.main.mediaurlbase='/luci-static/argon'
+    uci set luci.main.pollinterval='3'
+    uci commit luci
+fi
 
 # Set argon config
 uci set argon.@global[0].mode='dark'
@@ -10,24 +78,58 @@ uci set argon.@global[0].transparency='0.5'
 uci set argon.@global[0].transparency_dark='0.5'
 uci commit argon
 
-# Set NTP
-uci -q batch <<-EOF
-	set system.@system[0].timezone='CST-8'
-	set system.@system[0].zonename='Asia/Shanghai'
+# ttyd
+uci set ttyd.@ttyd[0].command='/bin/login -f root'
+uci commit ttyd
+/etc/init.d/ttyd restart
 
-	delete system.ntp.server
-	add_list system.ntp.server='ntp1.aliyun.com'
-	add_list system.ntp.server='ntp.tencent.com'
-	add_list system.ntp.server='ntp.ntsc.ac.cn'
-	add_list system.ntp.server='time.apple.com'
-EOF
+# vlmcsd设置
+uci set vlmcsd.@vlmcsd[0].enabled='1'
+uci set vlmcsd.@vlmcsd[0].autoactivate='1'
+uci set vlmcsd.@vlmcsd[0].firewall='1'
+
+# timezone
+uci set system.@system[0].timezone=CST-8
+uci set system.@system[0].zonename=Asia/Shanghai
 uci commit system
 
-# diagnostics
-uci set luci.diag.ping='www.qq.com'
-uci set luci.diag.route='www.qq.com'
-uci set luci.diag.dns='www.qq.com'
-uci commit luci
+# log level
+uci set system.@system[0].conloglevel='1'
+uci set system.@system[0].cronloglevel='9'
+uci commit system
+
+# zram
+mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+zram_size=$(awk "BEGIN {print int($mem_total*0.25/1024)}")
+uci set system.@system[0].zram_size_mb="$zram_size"
+uci set system.@system[0].zram_comp_algo='lz4'
+uci commit system
+
+# apk mirror
+distfeeds=/etc/apk/repositories.d/distfeeds.list
+if [ $(grep -c SNAPSHOT "$distfeeds") -eq '0' ]; then
+  sed -i 's,downloads.openwrt.org,mirrors.cloud.tencent.com/openwrt,g' "$distfeeds"
+else
+  sed -i 's,downloads.openwrt.org,mirror.sjtu.edu.cn/openwrt,g' "$distfeeds"
+fi
+
+# extra packages
+echo "https://opkg.cooluc.com/openwrt-25.12/$(cat /etc/apk/arch)/packages.adb" >> "$distfeeds"
+
+# nginx
+uci set nginx.global.uci_enable='true'
+uci del nginx._lan
+uci del nginx._redirect2ssl
+uci add nginx server
+uci rename nginx.@server[0]='_lan'
+uci set nginx._lan.server_name='_lan'
+uci add_list nginx._lan.listen='80 default_server'
+uci add_list nginx._lan.listen='[::]:80 default_server'
+#uci add_list nginx._lan.include='restrict_locally'
+uci add_list nginx._lan.include='conf.d/*.locations'
+uci set nginx._lan.access_log='off; # logd openwrt'
+uci commit nginx
+service nginx restart
 
 # docker mirror
 if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -eq '0' ]; then
@@ -35,9 +137,190 @@ if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -e
     uci commit dockerd
 fi
 
-# vlmcsd设置
-uci set vlmcsd.@vlmcsd[0].enabled='1'
-uci set vlmcsd.@vlmcsd[0].autoactivate='1'
-uci set vlmcsd.@vlmcsd[0].firewall='1'
+# firewall
+[ $(grep -c shortcut_fe /etc/config/firewall) -eq '0' ] && uci set firewall.@defaults[0].flow_offloading='1'
+if [ "$(ip link show | grep -c '^.*: eth')" -le 1 ] || [ "$OPENWRT_BOARD" = "armsr/armv8" ]; then
+    uci set firewall.@zone[1].input='ACCEPT'
+fi
+uci set firewall.@defaults[0].input='ACCEPT'
+uci commit firewall
+
+# diagnostics
+if [ $(uci -q get luci.diag.ping) = "openwrt.org" ]; then
+    uci set luci.diag.dns='www.qq.com'
+    uci set luci.diag.ping='www.qq.com'
+    uci set luci.diag.route='www.qq.com'
+    uci commit luci
+fi
+
+# packet steering
+case "$(board_name)" in
+friendlyarm,nanopi-r76s)
+    uci set network.globals.packet_steering='0'
+    ;;
+*)
+    uci set network.globals.packet_steering=2
+    uci set network.globals.steering_flows='128'
+    ;;
+esac
+uci commit network
+
+# disable coremark
+sed -i '/coremark/d' /etc/crontabs/root
+crontab /etc/crontabs/root
+
+# ==========================================================
+# 网络 / LAN 设置
+# LAN 静态 IP：192.168.1.10
+# 主路由网关：192.168.1.1
+# 说明：
+#   当前设备作为旁路由或二级设备使用固定 LAN 地址。
+#   默认网关指向主路由 192.168.1.1。
+# ==========================================================
+# 设置 LAN 接口为静态地址模式
+uci -q set network.lan=interface
+uci -q set network.lan.proto='static'
+# 绑定 LAN 设备为 eth0
+uci -q set network.lan.device='eth0'
+# 设置 LAN IP、子网掩码和网关
+uci -q set network.lan.ipaddr='192.168.1.10'
+uci -q set network.lan.netmask='255.255.255.0'
+uci -q set network.lan.gateway='192.168.1.1'
+# 强制认为链路可用
+uci -q set network.lan.force_link='1'
+# 启用默认路由，让本机通过主路由访问外网
+uci -q set network.lan.defaultroute='1'
+# 关闭 LAN 口 IPv6 前缀委派 / IPv6 地址分配
+uci -q set network.lan.delegate='0'
+uci -q delete network.lan.ip6assign
+# 保存 network 配置
+uci -q commit network
+# ==========================================================
+# DHCP / DNS - dnsmasq 设置
+# dnsmasq DNS 监听端口：1745
+# AdGuardHome 使用 53 端口提供 DNS 服务
+# 说明：
+#   默认情况下 dnsmasq 会占用 53 端口。
+#   这里将 dnsmasq 的 DNS 端口改为 1745，
+#   释放 53 端口给 AdGuardHome 使用。
+# ==========================================================
+# 确保 dnsmasq 主配置段存在
+uci -q set dhcp.@dnsmasq[0]=dnsmasq
+# ----------------------------------------------------------
+# 基础 DNS / 本地域名设置
+# ----------------------------------------------------------
+# 不转发无点域名，减少无效 DNS 查询
+uci -q set dhcp.@dnsmasq[0].domainneeded='1'
+# 本地化查询结果，返回适合本地网络的地址
+uci -q set dhcp.@dnsmasq[0].localise_queries='1'
+# 启用 DNS Rebind 保护
+uci -q set dhcp.@dnsmasq[0].rebind_protection='1'
+# 允许 localhost 相关地址通过 Rebind 检查
+uci -q set dhcp.@dnsmasq[0].rebind_localhost='1'
+# 设置本地域名后缀为 lan
+uci -q set dhcp.@dnsmasq[0].local='/lan/'
+uci -q set dhcp.@dnsmasq[0].domain='lan'
+# 自动扩展主机名，例如 host -> host.lan
+uci -q set dhcp.@dnsmasq[0].expandhosts='1'
+# ----------------------------------------------------------
+# DNS 端口设置
+# ----------------------------------------------------------
+# 将 dnsmasq DNS 端口从默认 53 改为 1745
+# 这样 AdGuardHome 可以监听 53 端口
+uci -q set dhcp.@dnsmasq[0].port='1745'
+# ----------------------------------------------------------
+# DNS 缓存设置
+# ----------------------------------------------------------
+# 关闭 dnsmasq DNS 缓存，避免和 AdGuardHome 缓存重复
+uci -q set dhcp.@dnsmasq[0].cachesize='0'
+# 删除最小缓存 TTL 设置
+uci -q delete dhcp.@dnsmasq[0].min_cache_ttl
+# 设置最大缓存 TTL 为 3600 秒
+uci -q set dhcp.@dnsmasq[0].max_cache_ttl='3600'
+# ----------------------------------------------------------
+# DNS 查询数量 / EDNS 设置
+# ----------------------------------------------------------
+# 最大 DHCP 租约数量
+uci -q set dhcp.@dnsmasq[0].dhcpleasemax='150'
+# EDNS 包最大长度，1232 对 IPv6/UDP 环境较友好
+uci -q set dhcp.@dnsmasq[0].ednspacket_max='1232'
+# 最大并发 DNS 转发数量
+uci -q set dhcp.@dnsmasq[0].dnsforwardmax='150'
+# ----------------------------------------------------------
+# 上游 DNS 解析文件设置
+# ----------------------------------------------------------
+# 不读取系统 resolv.conf，避免 dnsmasq 自动使用系统 DNS
+uci -q set dhcp.@dnsmasq[0].noresolv='1'
+# 不强制按照上游 DNS 顺序查询
+uci -q set dhcp.@dnsmasq[0].strictorder='0'
+# ----------------------------------------------------------
+# hosts / ethers / DHCP 租约文件设置
+# ----------------------------------------------------------
+# 读取 /etc/ethers 中的静态 DHCP 绑定
+uci -q set dhcp.@dnsmasq[0].readethers='1'
+# DHCP 租约文件路径
+uci -q set dhcp.@dnsmasq[0].leasefile='/tmp/dhcp.leases'
+# 允许读取系统 hosts 文件
+uci -q set dhcp.@dnsmasq[0].nohosts='0'
+# 额外 hosts 文件路径
+uci -q set dhcp.@dnsmasq[0].addnhosts='/etc/dnsmasq.hosts'
+# ----------------------------------------------------------
+# 安全 / 本地服务限制
+# ----------------------------------------------------------
+# 只允许本地子网访问 dnsmasq 服务
+uci -q set dhcp.@dnsmasq[0].localservice='1'
+# ----------------------------------------------------------
+# DNSSEC 设置
+# ----------------------------------------------------------
+# 关闭 dnsmasq DNSSEC
+# 说明：
+#   如果 AdGuardHome 已负责 DNSSEC 或上游解析，
+#   dnsmasq 这里通常不需要再启用 DNSSEC。
+uci -q set dhcp.@dnsmasq[0].dnssec='0'
+uci -q set dhcp.@dnsmasq[0].dnsseccheckunsigned='0'
+# ----------------------------------------------------------
+# 日志设置
+# ----------------------------------------------------------
+# 关闭 DNS 查询日志
+uci -q set dhcp.@dnsmasq[0].logqueries='0'
+# 关闭 DHCP 日志
+uci -q set dhcp.@dnsmasq[0].logdhcp='0'
+# 静默 DHCP 日志输出
+uci -q set dhcp.@dnsmasq[0].quietdhcp='1'
+# ----------------------------------------------------------
+# 其他开关
+# ----------------------------------------------------------
+# 关闭权威 DHCP 模式
+uci -q set dhcp.@dnsmasq[0].authoritative='0'
+# 不同时查询所有上游 DNS
+uci -q set dhcp.@dnsmasq[0].allservers='0'
+# 不按顺序分配 IP
+uci -q set dhcp.@dnsmasq[0].sequential_ip='0'
+# 允许监听所有可用接口
+uci -q set dhcp.@dnsmasq[0].nonwildcard='0'
+# ----------------------------------------------------------
+# 静态 DNS 地址映射
+# router.local / router.lan -> 192.168.1.1
+# ----------------------------------------------------------
+# 清空已有静态地址映射，避免重复
+uci -q delete dhcp.@dnsmasq[0].address
+# 添加 router.local 和 router.lan 到主路由 IP 的映射
+uci -q add_list dhcp.@dnsmasq[0].address='/router.local/router.lan/192.168.1.1'
+# 保存 dhcp/dnsmasq 配置
+uci -q commit dhcp
+
+# init
+devices_setup
+
+# clean
+rm -rf /etc/profile.d/busybox-history-file.sh
+
+# ==========================================================
+# Enable AdGuardHome
+# ==========================================================
+uci -q set adguardhome.config.enabled='1'
+uci -q commit adguardhome
+/etc/init.d/adguardhome enable
+/etc/init.d/adguardhome restart
 
 exit 0
