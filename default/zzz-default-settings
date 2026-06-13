@@ -169,6 +169,93 @@ uci commit network
 sed -i '/coremark/d' /etc/crontabs/root
 crontab /etc/crontabs/root
 
+# ==========================================================
+# Network / LAN settings
+# LAN static IP: 192.168.1.10
+# Main router gateway: 192.168.1.1
+# ==========================================================
+
+uci -q set network.lan=interface
+uci -q set network.lan.proto='static'
+uci -q set network.lan.device='eth0'
+uci -q set network.lan.ipaddr='192.168.1.10'
+uci -q set network.lan.netmask='255.255.255.0'
+uci -q set network.lan.gateway='192.168.1.1'
+uci -q set network.lan.force_link='1'
+uci -q set network.lan.defaultroute='1'
+
+# Disable IPv6 delegation / IPv6 prefix assignment on LAN
+uci -q set network.lan.delegate='0'
+uci -q delete network.lan.ip6assign
+
+uci -q commit network
+
+
+# ==========================================================
+# DHCP / DNS - dnsmasq settings
+# dnsmasq DNS port: 1745
+# AdGuardHome should listen on port 53
+# ==========================================================
+
+uci -q set dhcp.@dnsmasq[0]=dnsmasq
+
+# Basic DNS / local domain
+uci -q set dhcp.@dnsmasq[0].domainneeded='1'
+uci -q set dhcp.@dnsmasq[0].localise_queries='1'
+uci -q set dhcp.@dnsmasq[0].rebind_protection='1'
+uci -q set dhcp.@dnsmasq[0].rebind_localhost='1'
+uci -q set dhcp.@dnsmasq[0].local='/lan/'
+uci -q set dhcp.@dnsmasq[0].domain='lan'
+uci -q set dhcp.@dnsmasq[0].expandhosts='1'
+
+# Move dnsmasq DNS away from 53, let AdGuardHome use 53
+uci -q set dhcp.@dnsmasq[0].port='1745'
+
+# Disable DNS cache
+uci -q set dhcp.@dnsmasq[0].cachesize='0'
+uci -q delete dhcp.@dnsmasq[0].min_cache_ttl
+uci -q set dhcp.@dnsmasq[0].max_cache_ttl='3600'
+
+# DNS query / EDNS limits
+uci -q set dhcp.@dnsmasq[0].dhcpleasemax='150'
+uci -q set dhcp.@dnsmasq[0].ednspacket_max='1232'
+uci -q set dhcp.@dnsmasq[0].dnsforwardmax='150'
+
+# Do not read system resolv file
+uci -q set dhcp.@dnsmasq[0].noresolv='1'
+uci -q set dhcp.@dnsmasq[0].strictorder='0'
+
+# Hosts / ethers / lease files
+uci -q set dhcp.@dnsmasq[0].readethers='1'
+uci -q set dhcp.@dnsmasq[0].leasefile='/tmp/dhcp.leases'
+uci -q set dhcp.@dnsmasq[0].nohosts='0'
+uci -q set dhcp.@dnsmasq[0].addnhosts='/etc/dnsmasq.hosts'
+
+# Security / local service
+uci -q set dhcp.@dnsmasq[0].localservice='1'
+
+# DNSSEC disabled
+uci -q set dhcp.@dnsmasq[0].dnssec='0'
+uci -q set dhcp.@dnsmasq[0].dnsseccheckunsigned='0'
+
+# Logging
+uci -q set dhcp.@dnsmasq[0].logqueries='0'
+uci -q set dhcp.@dnsmasq[0].logdhcp='0'
+uci -q set dhcp.@dnsmasq[0].quietdhcp='1'
+
+# Misc switches from screenshots
+uci -q set dhcp.@dnsmasq[0].authoritative='0'
+uci -q set dhcp.@dnsmasq[0].allservers='0'
+uci -q set dhcp.@dnsmasq[0].sequential_ip='0'
+uci -q set dhcp.@dnsmasq[0].nonwildcard='0'
+
+# Static DNS address mapping:
+# router.local / router.lan -> 192.168.1.1
+uci -q delete dhcp.@dnsmasq[0].address
+uci -q add_list dhcp.@dnsmasq[0].address='/router.local/router.lan/192.168.1.1'
+
+uci -q commit dhcp
+
 # init
 devices_setup
 
