@@ -315,4 +315,12 @@ devices_setup
 # clean
 rm -rf /etc/profile.d/busybox-history-file.sh
 
+# ==========================================================
+# Enable AdGuardHome
+# ==========================================================
+uci -q set adguardhome.config.enabled='1'
+uci -q commit adguardhome
+/etc/init.d/adguardhome enable
+/etc/init.d/adguardhome restart
+
 exit 0
