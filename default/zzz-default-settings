@@ -188,7 +188,7 @@ uci -q delete network.lan.dns
 # 设置自定义 DNS 服务器为主路由
 uci -q add_list network.lan.dns='192.168.1.1'
 # 关闭 LAN 接口 IPv6 前缀分配
-uci -q set network.lan.ip6assign='0'
+uci -q delete network.lan.ip6assign
 # 不委派 IPv6 前缀
 uci -q set network.lan.delegate='0'
 # 保存网络配置
@@ -218,12 +218,14 @@ uci -q set dhcp.@dnsmasq[0].dnssec='0'
 uci -q set dhcp.@dnsmasq[0].dnsseccheckunsigned='0'
 # 使用系统自动生成的上游解析文件
 uci -q set dhcp.@dnsmasq[0].resolvfile='/tmp/resolv.conf.d/resolv.conf.auto'
-# 不忽略解析文件
-uci -q set dhcp.@dnsmasq[0].noresolv='0'
+# 设置 DNS 忽略系统默认解析文件（“忽略解析文件”打勾）
+uci -q set dhcp.@dnsmasq[0].noresolv='1'
 # 清空已有额外 hosts 文件，避免重复
 uci -q delete dhcp.@dnsmasq[0].addnhosts
 # 添加额外 hosts 文件
 uci -q add_list dhcp.@dnsmasq[0].addnhosts='/etc/dnsmasq.hosts'
+# 关闭 DHCP 协议的常规日志（“不记录日志”打勾）
+uci -q set dhcp.@dnsmasq[0].logqueries='0'
 # ==========================================================
 # LAN DHCP 服务器设置
 # 对应截图：忽略此接口开启，即关闭 lan 口 DHCP 服务
