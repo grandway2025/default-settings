@@ -217,10 +217,10 @@ uci commit firewall
 # ==========================================================
 # 关闭唯一授权 DHCP
 uci -q set dhcp.@dnsmasq[0].authoritative='0'
-# 不同时查询所有上游 DNS
-uci -q set dhcp.@dnsmasq[0].allservers='0'
 # DNS 缓存大小=0，关闭 dnsmasq 缓存
 uci -q set dhcp.@dnsmasq[0].cachesize='0'
+# 最小缓存 TL 清空（缓存已关，留 0 即可）
+uci -q delete dhcp.@dnsmasq[0].min_cache_ttl
 # 关闭 DNSSEC
 uci -q set dhcp.@dnsmasq[0].dnssec='0'
 uci -q set dhcp.@dnsmasq[0].dnsseccheckunsigned='0'
