@@ -225,7 +225,9 @@ uci -q delete dhcp.@dnsmasq[0].addnhosts
 # 添加额外 hosts 文件
 uci -q add_list dhcp.@dnsmasq[0].addnhosts='/etc/dnsmasq.hosts'
 # 关闭 DHCP 协议的常规日志（“不记录日志”打勾）
-uci -q set dhcp.@dnsmasq[0].logqueries='0'
+uci -q set dhcp.@dnsmasq[0].quietdhcp='1'
+uci commit dhcp
+/etc/init.d/dnsmasq restart
 # ==========================================================
 # LAN DHCP 服务器设置
 # 对应截图：忽略此接口开启，即关闭 lan 口 DHCP 服务
