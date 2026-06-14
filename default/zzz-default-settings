@@ -72,21 +72,23 @@ if [ -d "/www/luci-static/argon" ] && [ -z "$(uci -q get luci.main.pollinterval)
     uci commit luci
 fi
 
-# Set argon config
+# Argon 主题外观
 uci set argon.@global[0].mode='dark'
 uci set argon.@global[0].transparency='0.5'
 uci set argon.@global[0].transparency_dark='0.5'
 uci commit argon
 
-# ttyd
+# ttyd 终端：免登录直接 root
 uci set ttyd.@ttyd[0].command='/bin/login -f root'
 uci commit ttyd
 /etc/init.d/ttyd restart
 
-# vlmcsd设置
+# vlmcsd（KMS 服务）
+
 uci set vlmcsd.@vlmcsd[0].enabled='1'
 uci set vlmcsd.@vlmcsd[0].autoactivate='1'
 uci set vlmcsd.@vlmcsd[0].firewall='1'
+uci commit vlmcsd
 
 # timezone
 uci set system.@system[0].timezone=CST-8
@@ -170,35 +172,34 @@ sed -i '/coremark/d' /etc/crontabs/root
 crontab /etc/crontabs/root
 
 # ==========================================================
-# LAN 接口设置
-# 对应截图：接口 lan，静态地址 192.168.1.10/24
-# 网关：192.168.1.1
+# LAN 接口
+# 截图对应：静态 192.168.1.10/24，网关 192.168.1.1
 # 自定义 DNS：192.168.1.1
+# IPv6 前缀分配长度：已禁用
 # ==========================================================
-# 设置 LAN 为静态地址
+# 协议：静态
 uci -q set network.lan.proto='static'
-# 设置本机管理 IP 地址
+# 本机管理 IP
 uci -q set network.lan.ipaddr='192.168.1.10'
-# 设置子网掩码
+# 子网掩码
 uci -q set network.lan.netmask='255.255.255.0'
-# 设置默认网关为主路由
+# 默认网关指向主路由
 uci -q set network.lan.gateway='192.168.1.1'
-# 清空已有 DNS，避免重复
+# 清空 DNS 后再写入，避免重复
 uci -q delete network.lan.dns
-# 设置自定义 DNS 服务器为主路由
 uci -q add_list network.lan.dns='192.168.1.1'
-# 关闭 LAN 接口 IPv6 前缀分配
+# IPv6 前缀分配长度：已禁用（移除该选项即为禁用）
 uci -q delete network.lan.ip6assign
-# 不委派 IPv6 前缀
+# 不向下游委派 IPv6 前缀
 uci -q set network.lan.delegate='0'
-# 保存网络配置
 uci -q commit network
 # ==========================================================
-# DHCP / dnsmasq 基础设置
-# 对应截图：本地域名 lan，唯一授权开启，顺序分配 IP 关闭
-# DNS 缓存大小为 0，表示不使用 dnsmasq DNS 缓存
+# dnsmasq 全局
+# 截图对应：本地域名 lan、唯一授权关闭、顺序分配关闭
+# DNS 缓存为 0、忽略解析文件打勾、不记录日志打勾
+# DNS 端口改为 1745，让出 53 给 AdGuardHome
 # ==========================================================
-# 设置本地域名为 lan
+# 本地域名
 uci -q set dhcp.@dnsmasq[0].domain='lan'
 # 关闭唯一授权 DHCP
 uci -q set dhcp.@dnsmasq[0].authoritative='0'
@@ -206,45 +207,39 @@ uci -q set dhcp.@dnsmasq[0].authoritative='0'
 uci -q set dhcp.@dnsmasq[0].sequential_ip='0'
 # 不同时查询所有上游 DNS
 uci -q set dhcp.@dnsmasq[0].allservers='0'
-# DNS 查询缓存大小设为 0，关闭 dnsmasq DNS 缓存
+# DNS 缓存大小=0，关闭 dnsmasq 缓存
 uci -q set dhcp.@dnsmasq[0].cachesize='0'
-# 最小缓存 TTL 设置为 0
+# 缓存 TTL
 uci -q set dhcp.@dnsmasq[0].min_cache_ttl='0'
-# 最大缓存 TTL 设置为 3600 秒
 uci -q set dhcp.@dnsmasq[0].max_cache_ttl='3600'
 # 关闭 DNSSEC
 uci -q set dhcp.@dnsmasq[0].dnssec='0'
-# 关闭 DNSSEC 检查未签名域名
 uci -q set dhcp.@dnsmasq[0].dnsseccheckunsigned='0'
-# 使用系统自动生成的上游解析文件
+# 上游解析文件（系统自动生成）
 uci -q set dhcp.@dnsmasq[0].resolvfile='/tmp/resolv.conf.d/resolv.conf.auto'
-# 设置 DNS 忽略系统默认解析文件（“忽略解析文件”打勾）
+# 忽略解析文件（界面"忽略解析文件"打勾）
 uci -q set dhcp.@dnsmasq[0].noresolv='1'
-# 清空已有额外 hosts 文件，避免重复
-uci -q delete dhcp.@dnsmasq[0].addnhosts
-# 添加额外 hosts 文件
-uci -q add_list dhcp.@dnsmasq[0].addnhosts='/etc/dnsmasq.hosts'
-# 关闭 DHCP 协议的常规日志（“不记录日志”打勾）
+# 不记录日志（界面"不记录日志"打勾，对应 --quiet-dhcp）
 uci -q set dhcp.@dnsmasq[0].quietdhcp='1'
-uci commit dhcp
-/etc/init.d/dnsmasq restart
-# ==========================================================
-# LAN DHCP 服务器设置
-# 对应截图：忽略此接口开启，即关闭 lan 口 DHCP 服务
-# RA / DHCPv6 / NDP 均禁用
-# ==========================================================
-# DNS 端口设置
-# ----------------------------------------------------------
-# 将 dnsmasq DNS 端口从默认 53 改为 1745
-# 这样 AdGuardHome 可以监听 53 端口
+# 清掉历史误设的 logqueries（如果存在）
+uci -q delete dhcp.@dnsmasq[0].logqueries
+# 额外 hosts
+uci -q delete dhcp.@dnsmasq[0].addnhosts
+uci -q add_list dhcp.@dnsmasq[0].addnhosts='/etc/dnsmasq.hosts'
+# 让出 53 端口给 AdGuardHome
 uci -q set dhcp.@dnsmasq[0].port='1745'
-# ----------------------------------------------------------
+# ==========================================================
+# LAN DHCP 服务器
+# 截图对应：忽略此接口（关闭 LAN DHCP）
+# RA / DHCPv6 / NDP 全部禁用
+# ==========================================================
 # 关闭 LAN 口 DHCP 服务
 uci -q set dhcp.lan.ignore='1'
-# 保留动态 DHCP 开关为开启状态，但由于 ignore=1，实际不会发放地址
+# 即便忽略，仍保留动态 DHCP 标记
 uci -q set dhcp.lan.dynamicdhcp='1'
-# 设置租约时间为 12 小时
+# 租约时间
 uci -q set dhcp.lan.leasetime='12h'
+# 禁用 IPv6 相关服务
 # 禁用 RA 服务
 uci -q set dhcp.lan.ra='disabled'
 # 禁用 DHCPv6 服务
@@ -253,6 +248,7 @@ uci -q set dhcp.lan.dhcpv6='disabled'
 uci -q set dhcp.lan.ndp='disabled'
 # 保存 DHCP / dnsmasq 配置
 uci -q commit dhcp
+/etc/init.d/dnsmasq restart
 # ==========================================================
 
 # init
