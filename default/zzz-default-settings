@@ -84,7 +84,6 @@ uci commit ttyd
 /etc/init.d/ttyd restart
 
 # vlmcsd（KMS 服务）
-
 uci set vlmcsd.@vlmcsd[0].enabled='1'
 uci set vlmcsd.@vlmcsd[0].autoactivate='1'
 uci set vlmcsd.@vlmcsd[0].firewall='1'
