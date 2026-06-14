@@ -194,52 +194,52 @@ uci -q delete network.lan.ip6assign
 uci -q set network.lan.delegate='0'
 uci -q commit network
 # ==========================================================
+# wan6 接口
+# 协议 DHCPv6 客户端，设备 @lan（LAN 别名）
+# 请求 IPv6 地址=尝试，请求 IPv6 前缀=自动
+# 委派 IPv6 前缀=开，IPv6 前缀分配长度=64，IPv6 分配指示=0
+# 旁路由场景：从主路由通过 DHCPv6-PD 拿到 IPv6 前缀
+# ==========================================================
+# 绑定到 LAN 的别名
+uci -q set network.wan6.device='@lan'
+# IPv6 前缀分配长度
+uci -q set network.wan6.ip6assign='64'
+uci -q commit network
+# ==========================================================
+# 把 wan6 加入 lan 防火墙区域（lan 区域包含 lan / wan6 / docker）
+uci -q del_list firewall.@zone[0].network='wan6'
+uci -q add_list firewall.@zone[0].network='wan6'
+uci commit firewall
+# ==========================================================
 # dnsmasq 全局
 # 截图对应：本地域名 lan、唯一授权关闭、顺序分配关闭
 # DNS 缓存为 0、忽略解析文件打勾、不记录日志打勾
 # DNS 端口改为 1745，让出 53 给 AdGuardHome
 # ==========================================================
-# 本地域名
-uci -q set dhcp.@dnsmasq[0].domain='lan'
 # 关闭唯一授权 DHCP
 uci -q set dhcp.@dnsmasq[0].authoritative='0'
-# 关闭顺序分配 IP
-uci -q set dhcp.@dnsmasq[0].sequential_ip='0'
 # 不同时查询所有上游 DNS
 uci -q set dhcp.@dnsmasq[0].allservers='0'
 # DNS 缓存大小=0，关闭 dnsmasq 缓存
 uci -q set dhcp.@dnsmasq[0].cachesize='0'
-# 缓存 TTL
-uci -q set dhcp.@dnsmasq[0].min_cache_ttl='0'
-uci -q set dhcp.@dnsmasq[0].max_cache_ttl='3600'
 # 关闭 DNSSEC
 uci -q set dhcp.@dnsmasq[0].dnssec='0'
 uci -q set dhcp.@dnsmasq[0].dnsseccheckunsigned='0'
-# 上游解析文件（系统自动生成）
-uci -q set dhcp.@dnsmasq[0].resolvfile='/tmp/resolv.conf.d/resolv.conf.auto'
 # 忽略解析文件（界面"忽略解析文件"打勾）
 uci -q set dhcp.@dnsmasq[0].noresolv='1'
 # 不记录日志（界面"不记录日志"打勾，对应 --quiet-dhcp）
 uci -q set dhcp.@dnsmasq[0].quietdhcp='1'
-# 清掉历史误设的 logqueries（如果存在）
-uci -q delete dhcp.@dnsmasq[0].logqueries
-# 额外 hosts
-uci -q delete dhcp.@dnsmasq[0].addnhosts
-uci -q add_list dhcp.@dnsmasq[0].addnhosts='/etc/dnsmasq.hosts'
 # 让出 53 端口给 AdGuardHome
 uci -q set dhcp.@dnsmasq[0].port='1745'
 # ==========================================================
 # LAN DHCP 服务器
-# 截图对应：忽略此接口（关闭 LAN DHCP）
+# 忽略此接口（关闭 LAN DHCP）
 # RA / DHCPv6 / NDP 全部禁用
 # ==========================================================
 # 关闭 LAN 口 DHCP 服务
 uci -q set dhcp.lan.ignore='1'
 # 即便忽略，仍保留动态 DHCP 标记
 uci -q set dhcp.lan.dynamicdhcp='1'
-# 租约时间
-uci -q set dhcp.lan.leasetime='12h'
-# 禁用 IPv6 相关服务
 # 禁用 RA 服务
 uci -q set dhcp.lan.ra='disabled'
 # 禁用 DHCPv6 服务
@@ -258,7 +258,7 @@ devices_setup
 rm -rf /etc/profile.d/busybox-history-file.sh
 
 # ==========================================================
-# Enable AdGuardHome
+# 启用 AdGuardHome
 # ==========================================================
 uci -q set adguardhome.config.enabled='1'
 uci -q commit adguardhome
