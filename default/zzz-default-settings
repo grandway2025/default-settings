@@ -178,18 +178,20 @@ crontab /etc/crontabs/root
 # ==========================================================
 # 协议：静态
 uci -q set network.lan.proto='static'
-# 本机管理 IP，与编译时ip保持一致
+# 本机管理 IP，与编译时 ip 保持一致
 LAN_ADDR="${LAN_ADDR:-__LAN_ADDR__}"
 uci -q set network.lan.ipaddr="${LAN_ADDR}"
 # 子网掩码
 uci -q set network.lan.netmask='255.255.255.0'
 # 默认网关指向主路由
-uci -q set network.lan.gateway='192.168.1.1'
+LAN_GATEWAY="${LAN_GATEWAY:-__LAN_GATEWAY__}"
+uci -q set network.lan.gateway="${LAN_GATEWAY}"
 # 清空 DNS 后再写入，避免重复
-uci -q delete network.lan.dns
-uci -q add_list network.lan.dns='192.168.1.1'
-# IPv6 前缀分配长度：已禁用（移除该选项即为禁用）
-uci -q delete network.lan.ip6assign
+LAN_DNS="${LAN_DNS:-__LAN_DNS__}"
+uci -q delete network.lan.dns || true
+uci -q add_list network.lan.dns="${LAN_DNS}"
+# IPv6 前缀分配长度：已禁用
+uci -q delete network.lan.ip6assign || true
 # 不向下游委派 IPv6 前缀
 uci -q set network.lan.delegate='0'
 uci -q commit network
